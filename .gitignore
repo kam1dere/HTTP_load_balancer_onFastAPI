@@ -1,6 +1,7 @@
 #My
 .idea
 /data
+/haproxy
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
