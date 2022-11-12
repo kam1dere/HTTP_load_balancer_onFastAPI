@@ -1,7 +1,7 @@
 #!/bin/bash
-sleep 20
+sleep 150
 docker stop bwg_web_2 &
-sleep 40
+sleep 100
 docker start bwg_web_2
 
 

@@ -2,6 +2,8 @@ from fastapi import BackgroundTasks, FastAPI
 from typing import Union
 import httpx
 import time
+from .logs_from_the_balancer import complected_requests
+
 
 app = FastAPI()
 
@@ -16,39 +18,37 @@ servers = [
 
 
 @app.get("/{path:path}")
-async def balanc(background_tasks: BackgroundTasks, path: Union[str, None] = None):
+async def balancer(background_check_server: BackgroundTasks, path: Union[str, None] = None):
     try:
-        host_ID = servers.pop(0)
+        host_name = servers.pop(0)
     except IndexError:
         return 'Все сломалось, расходимся'
-    host_ID = proverka_life_server(host_ID, background_tasks)
-    a = f'http://{host_ID}/{path}'
-    print(a)
+    host_name = check_life_server(host_name, background_check_server)
     async with httpx.AsyncClient() as client:
-        response = await client.get(f'http://{host_ID}/{path}')
-        servers.append(host_ID)
+        response = await client.get(f'http://{host_name}/{path}')
+        servers.append(host_name)
     return response.content
 
 
-def proverka_life_server(host_ID, background_tasks):
+def check_life_server(host_name, background_check_server):
     try:
-        httpx.get(f'http://{host_ID}/health/')
-        return host_ID
+        httpx.get(f'http://{host_name}/health/')
+        return host_name
     except httpx.ConnectError:
-        background_tasks.add_task(health_check, host_ID)
+        background_check_server.add_task(health_check_background, host_name)
         try:
-            host_ID = servers.pop(0)
-            return proverka_life_server(host_ID, background_tasks)
+            host_name = servers.pop(0)
+            return check_life_server(host_name, background_check_server)
         except IndexError:
             return 'Все сломалось, расходимся'
 
 
-def health_check(host_ID):
+def health_check_background(host_name):
     while True:
         time.sleep(3)
         try:
-            httpx.get(f'http://{host_ID}/health/')
-            servers.append(host_ID)
+            httpx.get(f'http://{host_name}/health/')
+            servers.append(host_name)
             break
         except httpx.ConnectError:
             continue

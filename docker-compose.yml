@@ -5,6 +5,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     ports:
       - 8000-8005:8000
+      
 
   balancer:
     build: balancer/.
