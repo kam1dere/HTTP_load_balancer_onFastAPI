@@ -2,7 +2,6 @@ from fastapi import BackgroundTasks, FastAPI
 from typing import Union
 import httpx
 import time
-from .logs_from_the_balancer import complected_requests
 
 
 app = FastAPI()
