@@ -1,4 +1,7 @@
 def finally_statistic(file_name):
+    """
+    Получает файл с логами и выводит конечную статистику.
+    """
     file_logs = open(file_name, 'r')
     final_count = {'web_1': 0,
                    'web_2': 0,

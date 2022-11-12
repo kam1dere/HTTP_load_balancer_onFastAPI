@@ -18,18 +18,26 @@ servers = [
 
 @app.get("/{path:path}")
 async def balancer(background_check_server: BackgroundTasks, path: Union[str, None] = None):
+    """
+    Сам балансер. Берет первый сервер из очереди, а в конце добавляет его в конец.
+    Реализован алгоритм Round Robin
+    """
     try:
         host_name = servers.pop(0)
     except IndexError:
         return 'Все сломалось, расходимся'
-    host_name = check_life_server(host_name, background_check_server)
+    host_name = check_status_server(host_name, background_check_server)
     async with httpx.AsyncClient() as client:
         response = await client.get(f'http://{host_name}/{path}')
         servers.append(host_name)
     return response.content
 
 
-def check_life_server(host_name, background_check_server):
+def check_status_server(host_name, background_check_server):
+    """
+    Проверка работоспособности сервера, если жив > вернуть адресс,
+    если нет, отправить его в фоновую задачу и взять следующий адрес из очереди
+    """
     try:
         httpx.get(f'http://{host_name}/health/')
         return host_name
@@ -37,14 +45,18 @@ def check_life_server(host_name, background_check_server):
         background_check_server.add_task(health_check_background, host_name)
         try:
             host_name = servers.pop(0)
-            return check_life_server(host_name, background_check_server)
+            return check_status_server(host_name, background_check_server)
         except IndexError:
             return 'Все сломалось, расходимся'
 
 
 def health_check_background(host_name):
+    """
+    Фоновая проверка мертвого сервера, каждые 5 секунд отправляет запрос,
+    когда сервер ответит, он добавится в очередь
+    """
     while True:
-        time.sleep(3)
+        time.sleep(5)
         try:
             httpx.get(f'http://{host_name}/health/')
             servers.append(host_name)
