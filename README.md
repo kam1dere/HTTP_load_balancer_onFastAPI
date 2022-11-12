@@ -1,5 +1,5 @@
 # FastApi HTTP load balancer
-Реализация балансировщика нагрузки на FastAPI
+Балансировщик реализован на основе алгоритма Round-robin на Fastapi
 
 
 # Описание проекта
